@@ -1,11 +1,11 @@
 # Project DK
 
 ### Contributors
-Devon Tomlin
-Kyle Jensen
+* Devon Tomlin
+* Kyle Jensen
 
 ### Sponsors
-Galen Sprout (Contributing funds for snacks and sprites)
+* Galen Sprout (Contributing funds for snacks and sprites)
 
 ### Description
 2D Hardware Accelerated Game Engine written in C++. Using SDL_GPU, SCMLpp & TinyXML API's
@@ -13,6 +13,6 @@ Galen Sprout (Contributing funds for snacks and sprites)
 ### How to Run
 Run the following commands to run the game engine.
 ```sh
-    $ bash build.sh
-    $ build/main
+$ bash build.sh
+$ build/main
 ```
