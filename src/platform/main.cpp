@@ -51,6 +51,8 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
     }
 }
 
+#define LIB_PATH "../../lib/game.so"
+
 int main(int argc, char* argv[])
 {
     GameState gameState = {};
@@ -60,7 +62,7 @@ int main(int argc, char* argv[])
 
     while(true)
     {
-        TryReloadGameCode(&gameCode, "../lib/game.so");
+        TryReloadGameCode(&gameCode, LIB_PATH);
 
         if(gameCode.UpdateAndRender)
         {
