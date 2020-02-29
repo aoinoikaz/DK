@@ -1,8 +1,9 @@
-#include "game.h"
 #include "dlfcn.h"
 #include "iostream"
 #include "unistd.h"
 #include "sys/stat.h"
+
+#include "../shared/game_state.h"
 
 typedef void _UpdateAndRender(GameState* gameState);
 
@@ -41,7 +42,7 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
             dlclose(gameCode->gameDLL);
         }
 
-        gameCode->gameDLL = dlopen("../lib/game.so", RTLD_NOW);
+        gameCode->gameDLL = dlopen(gameDLLPath, RTLD_NOW);
         if(gameCode->gameDLL)
         {
             gameCode->UpdateAndRender = (_UpdateAndRender*)dlsym(gameCode->gameDLL, "UpdateAndRender");
@@ -65,6 +66,7 @@ int main(int argc, char* argv[])
         {
             gameCode.UpdateAndRender(&gameState);
         }
+
         sleep(0.1f);
     }
     return 0;

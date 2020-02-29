@@ -1,0 +1,4 @@
+struct GameState
+{
+    int Level;
+};
