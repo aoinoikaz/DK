@@ -1,16 +1,18 @@
 #!/bin/bash
 
-# List of source files to be compiled with the Game DLL
-dll_files=src/game.cpp
+# List of source files and libraries to be compiled with the Game DLL
+game_files=./src/game/*.cpp
+game_libs=-lSDL2
 
-# Compile dll files to game.so
-g++ -shared -o lib/game.so -fPIC $dll_files
+# Compile dll files to the game DLL
+g++ -shared -o lib/game.so -fPIC $game_files $game_libs
 
-# List of source files to be compiled with the platform layer/main executable
-cpp_files=src/main.cpp
+# List of source files and libraries to be compiled with the platform layer/main executable
+platform_files=./src/platform/*.cpp
+platform_libs=-ldl
 
 # Compile main executable and link necessary libraries
-g++ -o build/main $cpp_files -ldl
+g++ -o build/main $platform_files $platform_libs
 
 # Add execution permissions to main executable
 chmod a+x build/main
