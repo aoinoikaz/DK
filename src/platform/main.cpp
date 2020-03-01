@@ -177,14 +177,14 @@ int main(int argc, char* argv[])
     input.KeyReleased = &KeyReleased;
     input.MouseButtonDown = &MouseButtonDown;
     input.MouseButtonPressed = &MouseButtonPressed;
-    input.MouseButtonReleased = &MouseButtonDown;
+    input.MouseButtonReleased = &MouseButtonReleased;
 
     keyboardState = SDL_GetKeyboardState(&numKeys);
     previousKeyboardState = new Uint8[numKeys];
     startTicks = SDL_GetTicks();
 
     while(running)
-    {           
+    { 
         TryReloadGameCode(&gameCode, DLL_PATH);
 
         while(SDL_PollEvent(&gameEvents) != 0)
@@ -195,21 +195,21 @@ int main(int argc, char* argv[])
             }
         }
 
-        mouseState = SDL_GetMouseState(
-            &mousePosition.x, 
-            &mousePosition.y
-        );
-
         unsigned int elapsedTicks = SDL_GetTicks() - startTicks;
         float deltaTime = elapsedTicks * 0.001f;
-
+        
         if(deltaTime >= (1.0f / FRAME_RATE))
-        {  
+        {   
+            // Input
+            mouseState = SDL_GetMouseState(&mousePosition.x, &mousePosition.y);
+            
+            // Update/render the physics and changes from input
             if(gameCode.Update)
             {
                 gameCode.Update(&gameState, &input);
             }
-            //Reset
+
+            // Reset any state
             ResetInputState();
         } 
     }
