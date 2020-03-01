@@ -8,7 +8,7 @@
 * Galen Sprout (Contributing funds for snacks and sprites)
 
 ### Description
-2D Hardware Accelerated Game Engine written in C++. Using SDL_GPU, SCMLpp & TinyXML API's
+2D Hardware Accelerated Game Engine written in C++. Using SDL_GPU, SCMLpp & TinyXML.
 
 ### How to Run
 Run the following commands to run the game engine.
