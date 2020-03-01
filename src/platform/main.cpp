@@ -131,6 +131,8 @@ const int SCREEN_WIDTH = 1366;
 const int SCREEN_HEIGHT = 768;
 const int FRAME_RATE = 60;
 
+unsigned int startTicks;
+
 bool running = true;
 
 int main(int argc, char* argv[])
@@ -177,7 +179,7 @@ int main(int argc, char* argv[])
     keyboardState = SDL_GetKeyboardState(&numKeys);
     previousKeyboardState = new Uint8[numKeys];
 
-    unsigned int startTicks = SDL_GetTicks();
+    startTicks = SDL_GetTicks();
     while(running)
     {           
         TryReloadGameCode(&gameCode, DLL_PATH);
@@ -205,17 +207,10 @@ int main(int argc, char* argv[])
                 gameCode.Update(&gameState, &input);
             }
 
-            //Reset
-            startTicks = SDL_GetTicks();
-            memcpy(previousKeyboardState, keyboardState, numKeys);
-        } 
+            // draw
 
-        previousMouseState = mouseState;
-
-        //Draw
-
-        //Play audio
-       
+            ResetInputState();
+        }   
     }
 
     delete[] previousKeyboardState; // Doesnt this get released when execution ends anyways?
@@ -223,4 +218,9 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
+void ResetInputState()
+{
+    startTicks = SDL_GetTicks();
+    memcpy(previousKeyboardState, keyboardState, numKeys);
+    previousMouseState = mouseState;
+}
