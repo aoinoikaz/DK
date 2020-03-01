@@ -25,7 +25,6 @@ struct GameCode
     timespec lastWriteTime;
 };
 
-
 bool operator >(const timespec& lhs, const timespec& rhs)
 {
 	if (lhs.tv_sec == rhs.tv_sec) 
@@ -62,13 +61,20 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
 }
 
 // Input handling
-
 int numKeys = 0;
 Uint8* previousKeyboardState;
 const Uint8* keyboardState;
 Uint32 previousMouseState;
 Uint32 mouseState;
 Vector2 mousePosition;
+unsigned int startTicks;
+
+void ResetInputState()
+{
+    startTicks = SDL_GetTicks();
+    previousMouseState = mouseState;
+    memcpy(previousKeyboardState, keyboardState, numKeys);
+}
 
 bool KeyDown(KeyCode keyCode)
 {
@@ -123,8 +129,7 @@ Vector2 GetMousePosition(void)
     return mousePosition;
 }
 
-// Main Loop
-
+// Main loop setup
 SDL_Event gameEvents;
 
 const int SCREEN_WIDTH = 800;
@@ -172,14 +177,14 @@ int main(int argc, char* argv[])
     input.KeyReleased = &KeyReleased;
     input.MouseButtonDown = &MouseButtonDown;
     input.MouseButtonPressed = &MouseButtonPressed;
-    input.MouseButtonReleased = &MouseButtonDown;
-  
+    input.MouseButtonReleased = &MouseButtonReleased;
+
     keyboardState = SDL_GetKeyboardState(&numKeys);
     previousKeyboardState = new Uint8[numKeys];
+    startTicks = SDL_GetTicks();
 
-    unsigned int startTicks = SDL_GetTicks();
     while(running)
-    {           
+    { 
         TryReloadGameCode(&gameCode, DLL_PATH);
 
         while(SDL_PollEvent(&gameEvents) != 0)
@@ -196,30 +201,24 @@ int main(int argc, char* argv[])
 
         unsigned int elapsedTicks = SDL_GetTicks() - startTicks;
         float deltaTime = elapsedTicks * 0.001f;
-
+        
         if(deltaTime >= (1.0f / FRAME_RATE))
-        {  
+        {   
+            // Input
+            mouseState = SDL_GetMouseState(&mousePosition.x, &mousePosition.y);
+            
+            // Update/render the physics and changes from input
             if(gameCode.Update)
             {
                 gameCode.Update(&gameState, &input);
             }
 
-            //Reset
-            startTicks = SDL_GetTicks();
-            memcpy(previousKeyboardState, keyboardState, numKeys);
-            previousMouseState = mouseState;
+            // Reset any state
+            ResetInputState();
         } 
-
-
-        //Draw
-
-        //Play audio
-       
     }
 
     delete[] previousKeyboardState; // Doesnt this get released when execution ends anyways?
 
     return 0;
 }
-
-
