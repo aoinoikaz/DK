@@ -127,8 +127,8 @@ Vector2 GetMousePosition(void)
 
 SDL_Event gameEvents;
 
-const int SCREEN_WIDTH = 1366;
-const int SCREEN_HEIGHT = 768;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
 const int FRAME_RATE = 60;
 
 bool running = true;
@@ -190,8 +190,7 @@ int main(int argc, char* argv[])
             }
         }
 
-        mouseState = SDL_GetMouseState(
-            &mousePosition.x, 
+        mouseState = SDL_GetMouseState(&mousePosition.x, 
             &mousePosition.y
         );
 
@@ -208,9 +207,9 @@ int main(int argc, char* argv[])
             //Reset
             startTicks = SDL_GetTicks();
             memcpy(previousKeyboardState, keyboardState, numKeys);
+            previousMouseState = mouseState;
         } 
 
-        previousMouseState = mouseState;
 
         //Draw
 

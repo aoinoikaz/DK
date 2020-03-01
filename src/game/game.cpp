@@ -29,4 +29,9 @@ extern "C" void UpdateGameState(GameState* gameState, Input* input)
     {
         std::cout << "Left mouse down" << std::endl;
     }
+
+    if(input->MouseButtonReleased(MouseButton::Left)) 
+    {
+        std::cout << "Left mouse Released" << std::endl;
+    }
 }
