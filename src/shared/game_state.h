@@ -1,4 +1,4 @@
 struct GameState
 {
-    int Level;
+    int ticks;
 };
