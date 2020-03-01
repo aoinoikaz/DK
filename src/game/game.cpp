@@ -5,6 +5,15 @@ extern "C" void UpdateGameState(GameState* gameState, Input* input)
 {
     std::cout << ++gameState->ticks / 60 << std::endl;
 
+    if(input->MouseButtonDown(MouseButton::Right))
+    {
+        std::cout << "Right mouse button down" << std::endl;
+    }
+    if(input->MouseButtonReleased(MouseButton::Right))
+    {
+        std::cout << "Right mouse button released" << std::endl;
+    }
+    
     if(input->KeyDown(KeyCode::W)) 
     {
         std::cout << "W Down" << std::endl;

@@ -25,7 +25,6 @@ struct GameCode
     timespec lastWriteTime;
 };
 
-
 bool operator >(const timespec& lhs, const timespec& rhs)
 {
 	if (lhs.tv_sec == rhs.tv_sec) 
@@ -62,13 +61,20 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
 }
 
 // Input handling
-
 int numKeys = 0;
 Uint8* previousKeyboardState;
 const Uint8* keyboardState;
 Uint32 previousMouseState;
 Uint32 mouseState;
 Vector2 mousePosition;
+unsigned int startTicks;
+
+void ResetInputState()
+{
+    startTicks = SDL_GetTicks();
+    previousMouseState = mouseState;
+    memcpy(previousKeyboardState, keyboardState, numKeys);
+}
 
 bool KeyDown(KeyCode keyCode)
 {
@@ -123,15 +129,12 @@ Vector2 GetMousePosition(void)
     return mousePosition;
 }
 
-// Main Loop
-
+// Main loop setup
 SDL_Event gameEvents;
 
-const int SCREEN_WIDTH = 1366;
-const int SCREEN_HEIGHT = 768;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
 const int FRAME_RATE = 60;
-
-unsigned int startTicks;
 
 bool running = true;
 
@@ -214,11 +217,4 @@ int main(int argc, char* argv[])
     delete[] previousKeyboardState; // Doesnt this get released when execution ends anyways?
 
     return 0;
-}
-
-void ResetInputState()
-{
-    startTicks = SDL_GetTicks();
-    previousMouseState = mouseState;
-    memcpy(previousKeyboardState, keyboardState, numKeys);
 }
