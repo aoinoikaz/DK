@@ -3,6 +3,8 @@
 #include "unistd.h"
 #include "sys/stat.h"
 
+#include "map"
+
 #include "SDL.h"
 #include "SDL_gpu.h"
 #include "SDL_image.h"
@@ -60,13 +62,87 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
     }
 }
 
+// Graphics
+
+std::map<const char*, GPU_Image*> textures;
+std::map<std::string, GPU_Image*> texts;
+std::map<std::string, TTF_Font*> fonts;
+
+// Get texture based on file path. 
+// If the texture exists in cached memory, return a pointer to the texture.
+// Otherwise, load the image from memory, cache it, and return a pointer to the texture.
+GPU_Image* GetTexture(const char* path)
+{
+    if(!textures[path])
+    {
+        GPU_Image* texture = NULL;
+        SDL_Surface* surface = IMG_Load(path);
+        if(surface == NULL)
+        {
+            std::cout << "Image load error | Path: " << path << " | Error: " << IMG_GetError() << std::endl;
+            return NULL;
+        }
+
+        texture = GPU_CopyImageFromSurface(surface);
+        if(texture == NULL)
+        {
+            std::cout << "Create texture error: " << SDL_GetError() << std::endl;
+            return NULL;
+        }
+
+        textures[path] = texture;
+
+        SDL_FreeSurface(surface);
+    }
+    return textures[path];
+}
+
+GPU_Image* GetText(std::string text, std::string fontPath, int fontSize, SDL_Colour colour)
+{
+    std::string fontKey = fontPath + (char)fontSize;
+    if(fonts[fontKey] == nullptr)
+    {
+        fonts[fontKey] = TTF_OpenFont(fontPath.c_str(), fontSize);
+        if(fonts[fontKey] == nullptr)
+        {
+            std::cout << "Font Loading Error | Path: " << fontPath << " | Error: " << TTF_GetError() << std::endl;
+            return NULL;
+        }
+    }
+
+    TTF_Font* font = fonts[fontKey];
+    std::string textKey = text + fontPath + char(fontSize) + (char)colour.r + (char)colour.b + (char)colour.g;
+    
+    // If this isn't the same text 
+    if(texts[textKey] == nullptr)
+    {
+        SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), colour);
+        if(!surface)
+        {
+            std::cout << "Text creation error: " << TTF_GetError() << std::endl;
+            return NULL;
+        }
+
+        texts[textKey] = GPU_CopyImageFromSurface(surface);
+        if(texts[textKey] == nullptr)
+        {
+            std::cout << "Text creation error: " << SDL_GetError() << std::endl;
+            return NULL;
+        }
+        SDL_FreeSurface(surface);
+    }
+    
+    return texts[textKey];
+}
+
 // Input handling
 int numKeys = 0;
 Uint8* previousKeyboardState;
 const Uint8* keyboardState;
 Uint32 previousMouseState;
 Uint32 mouseState;
-Vector2 mousePosition;
+int mousePosX;
+int mousePosY;
 unsigned int startTicks;
 
 void ResetInputState()
@@ -126,7 +202,7 @@ bool MouseButtonReleased(MouseButton mouseButton)
 
 Vector2 GetMousePosition(void)
 {
-    return mousePosition;
+    return Vector2((float)mousePosX, (float)mousePosY);
 }
 
 // Main loop setup
@@ -136,16 +212,11 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int FRAME_RATE = 60;
 
-unsigned int startTicks;
-
 bool running = true;
 
 int main(int argc, char* argv[])
 {
     GameCode gameCode = {};
-
-    GameState gameState = {};
-    gameState.ticks = 0;
 
     GPU_Target* target;
     if((target = GPU_Init(SCREEN_WIDTH, SCREEN_HEIGHT, GPU_DEFAULT_INIT_FLAGS)) == NULL) 
@@ -173,6 +244,15 @@ int main(int argc, char* argv[])
         return false;
     }
 
+    GameState gameState = {};
+    gameState.ticks = 0;
+    gameState.background1 = "assets/game_background_2.png";
+    gameState.background2 = "assets/game_background_4.png";
+    gameState.CurrentBackground = gameState.background1;
+
+    GetTexture(gameState.background1);
+    GetTexture(gameState.background2);
+
     Input input = {};
     input.KeyDown = &KeyDown;
     input.KeyPressed = &KeyPressed;
@@ -197,25 +277,22 @@ int main(int argc, char* argv[])
             }
         }
 
-        mouseState = SDL_GetMouseState(&mousePosition.x, 
-            &mousePosition.y
-        );
-
         unsigned int elapsedTicks = SDL_GetTicks() - startTicks;
         float deltaTime = elapsedTicks * 0.001f;
         
         if(deltaTime >= (1.0f / FRAME_RATE))
         {   
-            // Input
-            mouseState = SDL_GetMouseState(&mousePosition.x, &mousePosition.y);
+            mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
             
-            // Update/render the physics and changes from input
             if(gameCode.Update)
             {
                 gameCode.Update(&gameState, &input);
             }
 
-            // Reset any state
+            GPU_Clear(target);
+            GPU_BlitRect(textures[gameState.CurrentBackground], NULL, target, NULL);
+            GPU_Flip(target);
+
             ResetInputState();
         } 
     }
