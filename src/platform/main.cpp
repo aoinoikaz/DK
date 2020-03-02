@@ -4,6 +4,7 @@
 #include "sys/stat.h"
 
 #include "map"
+#include "vector"
 
 #include "SDL.h"
 #include "SDL_gpu.h"
@@ -14,11 +15,15 @@
 #include "../shared/game_state.h"
 #include "../shared/math_helper.h"
 #include "../shared/input.h"
+#include "../shared/game_object.h"
+#include "../shared/scene.h"
+
+// Real-time Code Recompilation
 
 #define DLL_PATH "lib/game.so"
 #define DLL_SYMBOL "UpdateGameState"
 
-typedef void _UpdateGameState(GameState* gameState, Input* input);
+typedef void _UpdateGameState(GameState* gameState, Scene* scene, Input input);
 
 struct GameCode
 {
@@ -71,7 +76,7 @@ std::map<std::string, TTF_Font*> fonts;
 // Get texture based on file path. 
 // If the texture exists in cached memory, return a pointer to the texture.
 // Otherwise, load the image from memory, cache it, and return a pointer to the texture.
-GPU_Image* GetTexture(const char* path)
+GPU_Image* LoadAndGetTexture(const char* path)
 {
     if(!textures[path])
     {
@@ -131,11 +136,11 @@ GPU_Image* GetText(std::string text, std::string fontPath, int fontSize, SDL_Col
         }
         SDL_FreeSurface(surface);
     }
-    
     return texts[textKey];
 }
 
 // Input handling
+
 int numKeys = 0;
 Uint8* previousKeyboardState;
 const Uint8* keyboardState;
@@ -206,6 +211,7 @@ Vector2 GetMousePosition(void)
 }
 
 // Main loop setup
+
 SDL_Event gameEvents;
 
 const int SCREEN_WIDTH = 800;
@@ -246,12 +252,7 @@ int main(int argc, char* argv[])
 
     GameState gameState = {};
     gameState.ticks = 0;
-    gameState.background1 = "assets/game_background_2.png";
-    gameState.background2 = "assets/game_background_4.png";
-    gameState.CurrentBackground = gameState.background1;
-
-    GetTexture(gameState.background1);
-    GetTexture(gameState.background2);
+    gameState.BackgroundPath = "assets/game_background_2.png";
 
     Input input = {};
     input.KeyDown = &KeyDown;
@@ -264,6 +265,14 @@ int main(int argc, char* argv[])
     keyboardState = SDL_GetKeyboardState(&numKeys);
     previousKeyboardState = new Uint8[numKeys];
     startTicks = SDL_GetTicks();
+
+    // Load the texture into memory; in this case
+    // we aren't using the returned value as its being
+    // loaded into our texture map
+    LoadAndGetTexture(gameState.BackgroundPath);
+
+    // Load the game object into the scene
+    Scene scene;
 
     while(running)
     { 
@@ -286,18 +295,31 @@ int main(int argc, char* argv[])
             
             if(gameCode.Update)
             {
-                gameCode.Update(&gameState, &input);
+                gameCode.Update(&gameState, &scene, input);
             }
 
             GPU_Clear(target);
-            GPU_BlitRect(textures[gameState.CurrentBackground], NULL, target, NULL);
+
+            // Iterate through all the objects in the scene
+            for(auto obj : scene.GameObjects)
+            {
+                // Will have to blit data to the screen accordingly to the specific game object type
+                switch(obj->ObjectType)
+                {
+                    case OBJECT_TYPE::basic:
+                    {
+                        GPU_BlitRect(textures[obj->GraphicFilePath], NULL, target, NULL);
+                    }break;
+                }
+            }
+
             GPU_Flip(target);
 
             ResetInputState();
         } 
     }
 
-    delete[] previousKeyboardState; // Doesnt this get released when execution ends anyways?
+    delete[] previousKeyboardState;
 
     return 0;
 }

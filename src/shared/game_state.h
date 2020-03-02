@@ -1,12 +1,9 @@
 #include "math_helper.h"
+#include "game_object.h"
 
 struct GameState
 {
     int ticks;
-
-    const char* background1;
-    const char* background2;
-    const char* CurrentBackground;
-
-    Vector2 playerPosition;
+    const char* BackgroundPath;
+    GameObject* background;
 };
