@@ -71,7 +71,12 @@ inline Vector2 RotateVector(Vector2 vec, float angle)
 
 const Vector2 VEC2_ZERO = { 0.0f, 0.0f };
 const Vector2 VEC2_ONE = { 1.0f, 1.0f };
-const Vector2 VEC2_UP = { 0.0f, 1.0f };
+
+const Vector2 VEC2_UP = { 0.0f, -1.0f };
 const Vector2 VEC2_RIGHT = { 1.0f, 0.0f };
+
+const Vector2 VEC2_DOWN = { 0.0f, 1.0f };
+const Vector2 VEC2_LEFT = { -1.0f, 0.0f };
+
 
 #endif

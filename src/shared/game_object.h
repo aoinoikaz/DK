@@ -1,7 +1,11 @@
 #ifndef GAME_OBJECT_H
 #define GAME_OBJECT_H
 
+#include "animation.h"
 #include "math_helper.h"
+#include "iostream"
+#include "vector"
+#include "string.h"
 
 enum OBJECT_TYPE { basic = 0, dynamic = 1, animated = 2};
 enum SPACE { local = 0, world = 1 };
@@ -10,32 +14,63 @@ struct GameObject
 {
     GameObject() = default;
 
-    GameObject(const char* name, const char* graphicFilePath, Vector2 pos = VEC2_ZERO, float rot = 0.0f, Vector2 scale = VEC2_ONE, OBJECT_TYPE objType = basic)
+    GameObject(const char* objName, const char* graphicFilePath)
     {
-        Name = name;
+        Type = OBJECT_TYPE::basic;
         GraphicFilePath = graphicFilePath;
+        Name = objName;
+        Parent = NULL;
+    }
 
-        ObjectType = objType;
+    GameObject(const char* objName, const char* graphicFilePath, std::vector<Animation> anims, Vector2 pos, Vector2 scale , float rot)
+    {
+        Type = OBJECT_TYPE::animated;
+        CurrentAnimation = anims.front();
+        Animations = anims;
 
+        GraphicFilePath = graphicFilePath;
+        Name = objName;
+       
         Position = pos;
         Rotation = rot;
         Scale = scale;
 
-        Active = true;
         Parent = NULL;
     }
 
     const char* Name;
     const char* GraphicFilePath;
-    bool Active;
-
-    OBJECT_TYPE ObjectType;
-
+    OBJECT_TYPE Type;
     GameObject* Parent;
+    Animation CurrentAnimation;
+    std::vector<Animation>Animations;
+
+    float Rotation;
     Vector2 Position;
     Vector2 Scale;
-    float Rotation;
 };
+
+Animation GetAnimationByName(GameObject* obj, const char* animationToFind)
+{
+    for(std::vector<Animation>::iterator it = obj->Animations.begin();
+        it != obj->Animations.end(); ++it)
+    {
+        if(strcmp((it)->Name, animationToFind) == 0)
+        {
+            return *it;
+        }
+    }
+}
+
+void SwapAnimation(GameObject* obj, const char* path, const char* animName)
+{
+    std::cout << "Object: " << &obj;
+    std::cout << " Path: " << path;
+    std::cout << " AnimName: " << animName << std::endl;
+
+    obj->CurrentAnimation = GetAnimationByName(obj, animName);
+    obj->GraphicFilePath = path;
+}
 
 float GetRotation(GameObject gameObject, SPACE space)
 {
