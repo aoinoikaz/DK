@@ -42,12 +42,13 @@ struct GameObject
     const char* GraphicFilePath;
     OBJECT_TYPE Type;
     GameObject* Parent;
-    Animation CurrentAnimation;
-    std::vector<Animation>Animations;
 
     float Rotation;
     Vector2 Position;
     Vector2 Scale;
+
+    Animation CurrentAnimation;
+    std::vector<Animation>Animations;
 };
 
 Animation GetAnimationByName(GameObject* obj, const char* animationToFind)

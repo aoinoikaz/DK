@@ -46,7 +46,7 @@ extern "C" void UpdateGameState(GameState* gameState, Scene* scene, Input input)
     if(input.KeyDown(KeyCode::A))
     {
         GameObject* obj = FindObjectByName(scene, "Player");
-        obj->CurrentAnimation.Flipped = true;
+        //obj->CurrentAnimation.Flipped = true;
         SwapAnimation(obj, gameState->Player_Run_Path, "Run");
         Translate(obj, VEC2_LEFT*2);
     }
@@ -56,8 +56,6 @@ extern "C" void UpdateGameState(GameState* gameState, Scene* scene, Input input)
         std::cout << "ObjectByName(Player): " << &go << std::endl;
         //SwapAnimation(FindObjectByName(scene, "Player"), gameState->Player_Idle_Path, "Idle");
     }
-
-
 
     if(input.KeyDown(KeyCode::S))
     {
@@ -69,7 +67,6 @@ extern "C" void UpdateGameState(GameState* gameState, Scene* scene, Input input)
     {
         SwapAnimation(FindObjectByName(scene, "Player"), gameState->Player_Idle_Path, "Idle");
     }
-
 
 
     if(input.KeyDown(KeyCode::D))

@@ -275,8 +275,6 @@ int main(int argc, char* argv[])
     LoadAndGetTexture(gameState.Player_Idle_Path);
     LoadAndGetTexture(gameState.Player_Run_Path);
 
-    bool animationProcessed = false;
-    float animationTimer = 0.0f;
     GPU_Rect sourceRect, destinationRect;
     Scene scene;
 
@@ -298,14 +296,14 @@ int main(int argc, char* argv[])
         
         if(deltaTime >= (1.0f / FRAME_RATE))
         {   
-            GPU_Clear(target);
-
-            mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
-            
             if(gameCode.Update)
             {
                 gameCode.Update(&gameState, &scene, input);
             }
+
+            GPU_Clear(target);
+
+            mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
 
             // Iterate through all the objects in the scene
             for(auto obj : scene.GameObjects)
@@ -328,27 +326,27 @@ int main(int argc, char* argv[])
                         destinationRect.y = obj->Position.y;
                         //std::cout << "2" << std::endl;
                         
-                        if(!animationProcessed)
+                        if(!obj->CurrentAnimation.AnimationProcessed)
                         {
                             //std::cout << "3" << std::endl;
-                            animationTimer += deltaTime;
-                            if(animationTimer >= obj->CurrentAnimation.AnimationSpeed)
+                            obj->CurrentAnimation.Timer += deltaTime;
+                            if(obj->CurrentAnimation.Timer >= obj->CurrentAnimation.AnimationSpeed)
                             {
                                 //std::cout << "4" << std::endl;
                                 if(obj->CurrentAnimation.WrapMode == Animation::loop)
                                 {
                                     //std::cout << "5" << std::endl;
-                                    animationTimer -= obj->CurrentAnimation.AnimationSpeed;
+                                    obj->CurrentAnimation.Timer -= obj->CurrentAnimation.AnimationSpeed;
                                 }
                                 else
                                 {
                                     //std::cout << "6" << std::endl;
-                                    animationProcessed = true;
-                                    animationTimer = obj->CurrentAnimation.AnimationSpeed - obj->CurrentAnimation.TimePerFrame;
+                                    obj->CurrentAnimation.AnimationProcessed = true;
+                                    obj->CurrentAnimation.Timer = obj->CurrentAnimation.AnimationSpeed - obj->CurrentAnimation.TimePerFrame;
                                 }
                             }
                             //std::cout << "7" << std::endl;
-                            int index = obj->CurrentAnimation.ClipX + ((int)(animationTimer / obj->CurrentAnimation.TimePerFrame) - 1) * obj->CurrentAnimation.ClipW;
+                            int index = obj->CurrentAnimation.ClipX + ((int)(obj->CurrentAnimation.Timer / obj->CurrentAnimation.TimePerFrame) - 1) * obj->CurrentAnimation.ClipW;
                             sourceRect.x = index % (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows));
                             sourceRect.y = obj->CurrentAnimation.ClipY * (index / (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows)));
                             //std::cout << "8" << std::endl;

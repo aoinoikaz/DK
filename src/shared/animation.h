@@ -11,13 +11,16 @@ struct Animation
     int Rows;
     float AnimationSpeed;
     float TimePerFrame;
-
+    float Timer;
+    
+    bool AnimationProcessed;
     bool Flipped;
     const char* Name;
 
     Animation() = default;
     Animation(const char* name, int frames, int rows, float animSpeed, int clipx, int clipy, int clipw, int cliph, WRAP_MODE wrapMode)
     {
+        Timer = 0.0f;
         Name = name;
         Frames = frames;
         Rows = rows;
@@ -29,6 +32,7 @@ struct Animation
         ClipH = cliph;
         WrapMode = wrapMode;
         Flipped = false;
+        AnimationProcessed = false;
     }
 };
 
