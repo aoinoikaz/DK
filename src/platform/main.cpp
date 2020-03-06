@@ -252,9 +252,9 @@ int main(int argc, char* argv[])
 
     GameState gameState = {};
     gameState.ticks = 0;
-    gameState.Background_Path = "assets/map/game_background_2.png";
-    gameState.Player_Idle_Path = "assets/character/player_idle.png";
-    gameState.Player_Run_Path = "assets/character/player_run.png";
+    // gameState.Background_Path = "assets/map/game_background_2.png";
+    // gameState.Player_Idle_Path = "assets/character/player_idle.png";
+    // gameState.Player_Run_Path = "assets/character/player_run.png";
 
     Input input = {};
     input.KeyDown = &KeyDown;
@@ -271,16 +271,15 @@ int main(int argc, char* argv[])
     // Load the texture into memory; in this case
     // we aren't using the returned value as its being
     // loaded into our texture map
-    LoadAndGetTexture(gameState.Background_Path);
-    LoadAndGetTexture(gameState.Player_Idle_Path);
-    LoadAndGetTexture(gameState.Player_Run_Path);
+    // LoadAndGetTexture(gameState.Background_Path);
+    // LoadAndGetTexture(gameState.Player_Idle_Path);
+    // LoadAndGetTexture(gameState.Player_Run_Path);
 
     GPU_Rect sourceRect, destinationRect;
     Scene scene;
 
     while(running)
     { 
-
         TryReloadGameCode(&gameCode, DLL_PATH);
 
         while(SDL_PollEvent(&gameEvents) != 0)
@@ -296,73 +295,72 @@ int main(int argc, char* argv[])
         
         if(deltaTime >= (1.0f / FRAME_RATE))
         {   
+            mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
+   
             if(gameCode.Update)
             {
                 gameCode.Update(&gameState, &scene, input);
             }
 
             GPU_Clear(target);
-
-            mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
-
-            // Iterate through all the objects in the scene
-            for(auto obj : scene.GameObjects)
-            {
-                // Will have to blit data to the screen accordingly to the specific game object type
-                switch(obj->Type)
-                {
-                    case OBJECT_TYPE::basic:
-                    {
-                        GPU_BlitRect(textures[obj->GraphicFilePath], NULL, target, NULL);
-                    }break;
-                    case OBJECT_TYPE::animated:
-                    {
-                        sourceRect.w = obj->CurrentAnimation.ClipW;
-                        sourceRect.h = obj->CurrentAnimation.ClipH;
-                        //std::cout << "1" << std::endl;
-                        destinationRect.w = obj->CurrentAnimation.ClipW;
-                        destinationRect.h = obj->CurrentAnimation.ClipH;
-                        destinationRect.x = obj->Position.x;
-                        destinationRect.y = obj->Position.y;
-                        //std::cout << "2" << std::endl;
-                        
-                        if(!obj->CurrentAnimation.AnimationProcessed)
-                        {
-                            //std::cout << "3" << std::endl;
-                            obj->CurrentAnimation.Timer += deltaTime;
-                            if(obj->CurrentAnimation.Timer >= obj->CurrentAnimation.AnimationSpeed)
-                            {
-                                //std::cout << "4" << std::endl;
-                                if(obj->CurrentAnimation.WrapMode == Animation::loop)
-                                {
-                                    //std::cout << "5" << std::endl;
-                                    obj->CurrentAnimation.Timer -= obj->CurrentAnimation.AnimationSpeed;
-                                }
-                                else
-                                {
-                                    //std::cout << "6" << std::endl;
-                                    obj->CurrentAnimation.AnimationProcessed = true;
-                                    obj->CurrentAnimation.Timer = obj->CurrentAnimation.AnimationSpeed - obj->CurrentAnimation.TimePerFrame;
-                                }
-                            }
-                            //std::cout << "7" << std::endl;
-                            int index = obj->CurrentAnimation.ClipX + ((int)(obj->CurrentAnimation.Timer / obj->CurrentAnimation.TimePerFrame) - 1) * obj->CurrentAnimation.ClipW;
-                            sourceRect.x = index % (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows));
-                            sourceRect.y = obj->CurrentAnimation.ClipY * (index / (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows)));
-                            //std::cout << "8" << std::endl;
-                        }
-                        //std::cout << "9" << std::endl;
-                        //std::cout << "Flipped" << obj->CurrentAnimation.Flipped << std::endl;
-                        GPU_BlitRectX(textures[obj->GraphicFilePath], &sourceRect, target, &destinationRect, 0, 0, 0, obj->CurrentAnimation.Flipped ? GPU_FLIP_HORIZONTAL : GPU_FLIP_NONE);
-                        //std::cout << "10" << std::endl;
-                    }break;
-                }
-            }
-
-            GPU_Flip(target);
-            
+            GPU_Flip(target);      
             ResetInputState();
         }
     }
     return 0;
 }
+
+
+// Iterate through all the objects in the scene
+// for(auto obj : scene.GameObjects)
+// {
+//     // Will have to blit data to the screen accordingly to the specific game object type
+//     switch(obj->Type)
+//     {
+//         case OBJECT_TYPE::basic:
+//         {
+//             GPU_BlitRect(textures[obj->GraphicFilePath], NULL, target, NULL);
+//         }break;
+//         case OBJECT_TYPE::animated:
+//         {
+//             sourceRect.w = obj->CurrentAnimation.ClipW;
+//             sourceRect.h = obj->CurrentAnimation.ClipH;
+//             //std::cout << "1" << std::endl;
+//             destinationRect.w = obj->CurrentAnimation.ClipW;
+//             destinationRect.h = obj->CurrentAnimation.ClipH;
+//             destinationRect.x = obj->Position.x;
+//             destinationRect.y = obj->Position.y;
+//             //std::cout << "2" << std::endl;
+            
+//             if(!obj->CurrentAnimation.AnimationProcessed)
+//             {
+//                 //std::cout << "3" << std::endl;
+//                 obj->CurrentAnimation.Timer += deltaTime;
+//                 if(obj->CurrentAnimation.Timer >= obj->CurrentAnimation.AnimationSpeed)
+//                 {
+//                     //std::cout << "4" << std::endl;
+//                     if(obj->CurrentAnimation.WrapMode == Animation::loop)
+//                     {
+//                         //std::cout << "5" << std::endl;
+//                         obj->CurrentAnimation.Timer -= obj->CurrentAnimation.AnimationSpeed;
+//                     }
+//                     else
+//                     {
+//                         //std::cout << "6" << std::endl;
+//                         obj->CurrentAnimation.AnimationProcessed = true;
+//                         obj->CurrentAnimation.Timer = obj->CurrentAnimation.AnimationSpeed - obj->CurrentAnimation.TimePerFrame;
+//                     }
+//                 }
+//                 //std::cout << "7" << std::endl;
+//                 int index = obj->CurrentAnimation.ClipX + ((int)(obj->CurrentAnimation.Timer / obj->CurrentAnimation.TimePerFrame) - 1) * obj->CurrentAnimation.ClipW;
+//                 sourceRect.x = index % (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows));
+//                 sourceRect.y = obj->CurrentAnimation.ClipY * (index / (obj->CurrentAnimation.ClipX * (obj->CurrentAnimation.Frames / obj->CurrentAnimation.Rows)));
+//                 //std::cout << "8" << std::endl;
+//             }
+//             //std::cout << "9" << std::endl;
+//             //std::cout << "Flipped" << obj->CurrentAnimation.Flipped << std::endl;
+//             GPU_BlitRectX(textures[obj->GraphicFilePath], &sourceRect, target, &destinationRect, 0, 0, 0, obj->CurrentAnimation.Flipped ? GPU_FLIP_HORIZONTAL : GPU_FLIP_NONE);
+//             //std::cout << "10" << std::endl;
+//         }break;
+//     }
+// }
