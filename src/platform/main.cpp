@@ -24,7 +24,7 @@
 #define DLL_PATH "lib/game.so"
 #define DLL_SYMBOL "UpdateGameState"
 
-typedef void _UpdateGameState(GameState* gameState, Scene* scene, Input input);
+typedef void _UpdateGameState(GameState* gameState, Input input);
 
 struct GameCode
 {
@@ -69,17 +69,18 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
 }
 
 // Graphics
-
-std::map<const char*, GPU_Image*> textures;
-std::map<std::string, GPU_Image*> texts;
-std::map<std::string, TTF_Font*> fonts;
+std::map<const char*, GPU_Image*> textureCache;
+std::map<const char*, GPU_Image*> textCache;
+std::map<const char*, TTF_Font*> fontCache;
 
 // Get texture based on file path. 
 // If the texture exists in cached memory, return a pointer to the texture.
 // Otherwise, load the image from memory, cache it, and return a pointer to the texture.
-GPU_Image* LoadAndGetTexture(const char* path)
+
+// NOTE (KYLE): Changed these to char* so we only use char* throughout application
+GPU_Image* GetTextureFromCache(const char* path)
 {
-    if(!textures[path])
+    if(!textureCache[path])
     {
         GPU_Image* texture = NULL;
         SDL_Surface* surface = IMG_Load(path);
@@ -96,48 +97,50 @@ GPU_Image* LoadAndGetTexture(const char* path)
             return NULL;
         }
 
-        textures[path] = texture;
+        textureCache[path] = texture;
 
         SDL_FreeSurface(surface);
     }
-    return textures[path];
+    return textureCache[path];
 }
 
-GPU_Image* GetText(std::string text, std::string fontPath, int fontSize, SDL_Colour colour)
+// NOTE (KYLE): Changed these to char* so we only use char* throughout application
+GPU_Image* GetTextFromCache(const char* text, const char* fontPath, int fontSize, SDL_Colour colour)
 {
-    std::string fontKey = fontPath + (char)fontSize;
-    if(fonts[fontKey] == nullptr)
+    const char* fontKey = fontPath + (char)fontSize;
+    if(fontCache[fontKey] == nullptr)
     {
-        fonts[fontKey] = TTF_OpenFont(fontPath.c_str(), fontSize);
-        if(fonts[fontKey] == nullptr)
+        fontCache[fontKey] = TTF_OpenFont(fontPath, fontSize);
+        if(fontCache[fontKey] == nullptr)
         {
             std::cout << "Font Loading Error | Path: " << fontPath << " | Error: " << TTF_GetError() << std::endl;
             return NULL;
         }
     }
 
-    TTF_Font* font = fonts[fontKey];
-    std::string textKey = text + fontPath + char(fontSize) + (char)colour.r + (char)colour.b + (char)colour.g;
+    TTF_Font* font = fontCache[fontKey];
+    char* textKey; strcpy(textKey, text);
+    strcat(textKey, fontPath + char(fontSize) + (char)colour.r + (char)colour.b + (char)colour.g);
     
     // If this isn't the same text 
-    if(texts[textKey] == nullptr)
+    if(textCache[textKey] == nullptr)
     {
-        SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), colour);
+        SDL_Surface* surface = TTF_RenderText_Solid(font, text, colour);
         if(!surface)
         {
             std::cout << "Text creation error: " << TTF_GetError() << std::endl;
             return NULL;
         }
 
-        texts[textKey] = GPU_CopyImageFromSurface(surface);
-        if(texts[textKey] == nullptr)
+        textCache[textKey] = GPU_CopyImageFromSurface(surface);
+        if(textCache[textKey] == nullptr)
         {
             std::cout << "Text creation error: " << SDL_GetError() << std::endl;
             return NULL;
         }
         SDL_FreeSurface(surface);
     }
-    return texts[textKey];
+    return textCache[textKey];
 }
 
 // Input handling
@@ -252,9 +255,6 @@ int main(int argc, char* argv[])
 
     GameState gameState = {};
     gameState.ticks = 0;
-    // gameState.Background_Path = "assets/map/game_background_2.png";
-    // gameState.Player_Idle_Path = "assets/character/player_idle.png";
-    // gameState.Player_Run_Path = "assets/character/player_run.png";
 
     Input input = {};
     input.KeyDown = &KeyDown;
@@ -268,15 +268,9 @@ int main(int argc, char* argv[])
     previousKeyboardState = new Uint8[numKeys];
     startTicks = SDL_GetTicks();
 
-    // Load the texture into memory; in this case
-    // we aren't using the returned value as its being
-    // loaded into our texture map
-    // LoadAndGetTexture(gameState.Background_Path);
-    // LoadAndGetTexture(gameState.Player_Idle_Path);
-    // LoadAndGetTexture(gameState.Player_Run_Path);
+    //NOTE (KYLE): Removed file load calls from here. Assets will be specified in game and loaded into platform cache.
 
     GPU_Rect sourceRect, destinationRect;
-    Scene scene;
 
     while(running)
     { 
@@ -299,16 +293,54 @@ int main(int argc, char* argv[])
    
             if(gameCode.Update)
             {
-                gameCode.Update(&gameState, &scene, input);
+                gameCode.Update(&gameState, input);
             }
 
             GPU_Clear(target);
+
+            for(std::vector<const char*>::iterator texturePath = gameState.renderTextures.begin();
+                texturePath != gameState.renderTextures.end(); ++texturePath)
+            {
+                //NOTE (KYLE): Get texture from cache here based on the current texture that needs to be rendered
+                GPU_Image* texture = GetTextureFromCache(*texturePath);
+
+                //TODO: Maybe just use BlitRectX for all animations. At the end of the day, they are all just images being drawn
+                GPU_BlitRect(texture, NULL, target, NULL); 
+            }
+
+            //NOTE (KYLE): Removed all animation functionality, this should happen in the game code and should be based on game ticks rather than time
+            //TODO: We also need to look into buffering frames in order to avoid missed frames during cp lag
+
             GPU_Flip(target);      
             ResetInputState();
         }
     }
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Iterate through all the objects in the scene

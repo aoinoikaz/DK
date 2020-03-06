@@ -2,4 +2,4 @@
 #include "../shared/input.h"
 #include "../shared/scene.h"
 
-extern "C" void UpdateGameState(GameState* gameState, Scene* scene, Input input);
+extern "C" void UpdateGameState(GameState* gameState, Input input);

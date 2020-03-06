@@ -1,25 +1,110 @@
 #include "game.h"
 #include "iostream"
 
-extern "C" void UpdateGameState(GameState* gameState, Scene* scene, Input input)
+extern "C" void UpdateGameState(GameState* gameState, Input input)
 {
-    int totalSeconds = gameState->ticks++ / 60;
-    int totalMinutes = totalSeconds >= 60 ? totalSeconds / 60 : 0;
-    int currentSeconds = totalSeconds % 60;
-    int mod = totalMinutes >= 60 ? totalMinutes % 60 : 0;
+    //NOTE (KYLE): If the game isn't initialized, load textures
+    if(!gameState->initialized) 
+    {
+        gameState->renderTextures.push_back("./assets/map/game_background_2.png");
+        gameState->initialized = true;
+    }
 
-    std::cout << "Session time | " << totalMinutes/60 << ":" << (totalMinutes >= 60 ? mod : totalMinutes) << ":" << currentSeconds << std::endl;
+    if(gameState->ticks++ % 60 == 0)
+    {
+        int totalSeconds = gameState->ticks / 60;
+        int totalMinutes = totalSeconds >= 60 ? totalSeconds / 60 : 0;
+        int currentSeconds = totalSeconds % 60;
+        int mod = totalMinutes >= 60 ? totalMinutes % 60 : 0;
+        std::cout << 1000 % 60 << std::endl;
+        std::cout << "Session time | " << totalMinutes/60 << ":" << (totalMinutes >= 60 ? mod : totalMinutes) << ":" << currentSeconds << std::endl;
+    }  
+
+    if(input.KeyDown(KeyCode::W)) 
+    {
+        std::cout << "Pressing W" << std::endl;
+    }
+
+    if(input.KeyDown(KeyCode::A)) 
+    {
+        std::cout << "Pressing A" << std::endl;
+    }
+
+    if(input.KeyDown(KeyCode::S)) 
+    {
+        std::cout << "Pressing S" << std::endl;
+    }
+
+    if(input.KeyDown(KeyCode::D)) 
+    {
+        std::cout << "Pressing D" << std::endl;
+    }
 
     if(input.MouseButtonDown(MouseButton::Left))
     {
-        Vector2 mouseClick = input.GetMouseCoordinates();
-        std::cout << "Left mouse button down : " << mouseClick.x << ", " << mouseClick.y << std::endl;
+        std::cout << "Left mouse button down" << std::endl;
     }
     if(input.MouseButtonReleased(MouseButton::Left))
     {
         std::cout << "Left mouse button released" << std::endl;
     }
+
+    //NOTE (KYLE): Animation sequence here. should be based on game ticks rather than time
+
+    //animSpeed = 60 because we want it to switch once per second
+    //frameCount = 10 because there are 10 frames in the sprite atlas
+    //gameState->renderTexture[i] = textureArray[(ticks / animSpeed) % frameCount] <-- quick maths
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

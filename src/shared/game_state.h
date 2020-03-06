@@ -1,9 +1,11 @@
 #include "math_helper.h"
+#include "vector"
 
 struct GameState
 {
     int ticks;
-    const char* Background_Path;
-    const char* Player_Idle_Path;
-    const char* Player_Run_Path;
+    bool initialized;
+
+    std::vector<const char*> renderTextures;
+    std::vector<Vector2> renderTexturePositions;
 };
