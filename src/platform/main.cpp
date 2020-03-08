@@ -15,9 +15,11 @@
 #include "../shared/game_state.h"
 #include "../shared/math_helper.h"
 #include "../shared/input.h"
-#include "../shared/game_object.h"
-#include "../shared/scene.h"
-#include "../shared/animation.h"
+#include "../shared/texture.h"
+
+// #include "../shared/game_object.h"
+// #include "../shared/scene.h"
+// #include "../shared/animation.h"
 
 // Real-time Code Recompilation
 
@@ -41,11 +43,11 @@ bool operator >(const timespec& lhs, const timespec& rhs)
 		return lhs.tv_sec > rhs.tv_sec;
 }
 
-void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
+void TryReloadGameCode(GameCode* gameCode, std::string gameDLLPath)
 {
     struct stat fileInfo;
 
-    if(stat(gameDLLPath, &fileInfo) == -1)
+    if(stat(gameDLLPath.c_str(), &fileInfo) == -1)
     {
         std::cout << "Unable to get file properties: " << errno << std::endl;
     }
@@ -59,7 +61,7 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
             gameCode->Update = NULL;
         }
 
-        gameCode->gameDLL = dlopen(gameDLLPath, RTLD_NOW);
+        gameCode->gameDLL = dlopen(gameDLLPath.c_str(), RTLD_NOW);
         if(gameCode->gameDLL)
         {
             gameCode->Update = (_UpdateGameState*) dlsym(gameCode->gameDLL, DLL_SYMBOL);
@@ -69,21 +71,19 @@ void TryReloadGameCode(GameCode* gameCode, const char* gameDLLPath)
 }
 
 // Graphics
-std::map<const char*, GPU_Image*> textureCache;
-std::map<const char*, GPU_Image*> textCache;
-std::map<const char*, TTF_Font*> fontCache;
+std::map<std::string, GPU_Image*> textureCache;
+std::map<std::string, GPU_Image*> textCache;
+std::map<std::string, TTF_Font*> fontCache;
 
 // Get texture based on file path. 
 // If the texture exists in cached memory, return a pointer to the texture.
 // Otherwise, load the image from memory, cache it, and return a pointer to the texture.
-
-// NOTE (KYLE): Changed these to char* so we only use char* throughout application
-GPU_Image* GetTextureFromCache(const char* path)
+GPU_Image* GetTextureFromCache(std::string path)
 {
     if(!textureCache[path])
     {
         GPU_Image* texture = NULL;
-        SDL_Surface* surface = IMG_Load(path);
+        SDL_Surface* surface = IMG_Load(path.c_str());
         if(surface == NULL)
         {
             std::cout << "Image load error | Path: " << path << " | Error: " << IMG_GetError() << std::endl;
@@ -104,13 +104,12 @@ GPU_Image* GetTextureFromCache(const char* path)
     return textureCache[path];
 }
 
-// NOTE (KYLE): Changed these to char* so we only use char* throughout application
-GPU_Image* GetTextFromCache(const char* text, const char* fontPath, int fontSize, SDL_Colour colour)
+GPU_Image* GetTextFromCache(std::string text, std::string fontPath, int fontSize, SDL_Colour colour)
 {
-    const char* fontKey = fontPath + (char)fontSize;
+    std::string fontKey = fontPath + (char)fontSize;
     if(fontCache[fontKey] == nullptr)
     {
-        fontCache[fontKey] = TTF_OpenFont(fontPath, fontSize);
+        fontCache[fontKey] = TTF_OpenFont(fontPath.c_str(), fontSize);
         if(fontCache[fontKey] == nullptr)
         {
             std::cout << "Font Loading Error | Path: " << fontPath << " | Error: " << TTF_GetError() << std::endl;
@@ -119,13 +118,12 @@ GPU_Image* GetTextFromCache(const char* text, const char* fontPath, int fontSize
     }
 
     TTF_Font* font = fontCache[fontKey];
-    char* textKey; strcpy(textKey, text);
-    strcat(textKey, fontPath + char(fontSize) + (char)colour.r + (char)colour.b + (char)colour.g);
+    std::string textKey = text + fontPath + char(fontSize) + (char)colour.r + (char)colour.b + (char)colour.g;
     
     // If this isn't the same text 
     if(textCache[textKey] == nullptr)
     {
-        SDL_Surface* surface = TTF_RenderText_Solid(font, text, colour);
+        SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), colour);
         if(!surface)
         {
             std::cout << "Text creation error: " << TTF_GetError() << std::endl;
@@ -298,23 +296,39 @@ int main(int argc, char* argv[])
 
             GPU_Clear(target);
 
-            for(std::vector<const char*>::iterator texturePath = gameState.renderTextures.begin();
-                texturePath != gameState.renderTextures.end(); ++texturePath)
+            for(std::vector<Texture>::iterator it = gameState.renderTextures.begin();
+                it != gameState.renderTextures.end(); ++it)
             {
-                //NOTE (KYLE): Get texture from cache here based on the current texture that needs to be rendered
-                GPU_Image* texture = GetTextureFromCache(*texturePath);
+                GPU_Image* texture = GetTextureFromCache((*it).filePath);
 
-                //TODO: Maybe just use BlitRectX for all animations. At the end of the day, they are all just images being drawn
-                GPU_BlitRect(texture, NULL, target, NULL); 
+                GPU_Rect src;
+                src.x = (*it).source.x;
+                src.y = (*it).source.y;
+                src.w = (*it).source.w;
+                src.h = (*it).source.h;
+
+                GPU_Rect dest;
+                dest.x = (*it).destination.x;
+                dest.y = (*it).destination.y;
+                dest.w = (*it).destination.w;
+                dest.h = (*it).destination.h;
+
+                GPU_BlitRectX(
+                    texture,
+                    &src, 
+                    target, 
+                    &dest, 
+                    0, 
+                    0, 0, 
+                    (*it).flipped == true ? GPU_FLIP_HORIZONTAL : GPU_FLIP_NONE
+                );
             }
-
-            //NOTE (KYLE): Removed all animation functionality, this should happen in the game code and should be based on game ticks rather than time
-            //TODO: We also need to look into buffering frames in order to avoid missed frames during cp lag
 
             GPU_Flip(target);      
             ResetInputState();
         }
     }
+
     return 0;
 }
 

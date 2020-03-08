@@ -1,0 +1,29 @@
+frame_speed: 60
+
+bones: [
+    (id: "torso", image: "player_torso.png", width: 1.0f, height: 1.0f)
+    (id: "pants", image: "player_pantts.png", width: 1.0f, height: 1.0f)
+]
+
+frames: [
+    (
+        (id: "torso", posX: 1.0f, posY: 1.0f)
+        (id: "pants", posX: 1.0f, posY: 2.0f)
+    )
+    (
+        (id: "torso", posX: 1.0f, posY: 2.0f)
+        (id: "pants", posX: 1.0f, posY: 3.0f)
+    )
+    (
+        (id: "torso", posX: 1.0f, posY: 3.0f)
+        (id: "pants", posX: 1.0f, posY: 4.0f)
+    )
+    (
+        (id: "torso", posX: 1.0f, posY: 2.0f)
+        (id: "pants", posX: 1.0f, posY: 3.0f)
+    )
+    (
+        (id: "torso", posX: 1.0f, posY: 1.0f)
+        (id: "pants", posX: 1.0f, posY: 2.0f)
+    )
+]

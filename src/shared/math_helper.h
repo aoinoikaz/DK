@@ -6,6 +6,23 @@
 #define PI 3.14159265
 #define DEG_TO_RAD PI / 180.0f
 
+struct Rect
+{
+    Rect() = default;
+    Rect(int _x, int _y, int _w, int _h)
+    {
+        x = _x;
+        y = _y;
+        w = _w;
+        h = _h;
+    }
+
+    int x;
+    int y;
+    int w;
+    int h;
+};
+
 struct Vector2
 {
     float x;

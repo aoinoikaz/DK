@@ -1,4 +1,5 @@
 #include "math_helper.h"
+#include "texture.h"
 #include "vector"
 
 struct GameState
@@ -6,6 +7,5 @@ struct GameState
     int ticks;
     bool initialized;
 
-    std::vector<const char*> renderTextures;
-    std::vector<Vector2> renderTexturePositions;
+    std::vector<Texture> renderTextures;
 };
