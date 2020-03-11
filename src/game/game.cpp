@@ -1,19 +1,16 @@
 #include "game.h"
-#include "iostream"
+//#include "iostream"
 #include "fstream"
-
+#include "sstream"
 
 struct Bone {
-    int id;
+    std::string id;
     std::string image;
-    float width;
-    float height;
+    Rect rect;
 };
 
 struct Frame {
-    int id;
-    float posX;
-    float posY;
+    std::vector<Bone> boneStates;
 };
 
 struct Animation {
@@ -21,7 +18,8 @@ struct Animation {
     std::vector<Frame> frames;
     int frameSpeed;
 };
-#include "cstring"
+
+
 Animation LoadAnimation(std::string filePath)
 {
     Animation anim;
@@ -42,54 +40,124 @@ Animation LoadAnimation(std::string filePath)
     }
     animationFile.close();
 
-    std::cout << "Animation File:" << file << std::endl;
+    std::cout << "Loaded Animation File:" << file << std::endl;
 
-    std::string searchTerm = "frame_speed:";
-
-    std::vector<std::string> sections;
     std::string frameSpeedSection = file.substr(0, file.find("bones:"));
     std::string boneSection = file.substr(frameSpeedSection.length(), file.find("frames:") - frameSpeedSection.length());
     std::string frameSection = file.substr(frameSpeedSection.length() + boneSection.length());
 
-    std::cout << "Frame Speed: " << frameSpeedSection << std::endl<< std::endl;
-    std::cout << "Bones: " << boneSection << std::endl<< std::endl;
-    std::cout << "Frames: " << frameSection << std::endl<< std::endl;
+    boneSection = boneSection.substr(boneSection.find("[") + 1, boneSection.find("]") - boneSection.find("[") - 1);
+    frameSection = frameSection.substr(frameSection.find("[") + 1, frameSection.find("]") - frameSection.find("[") - 1);
 
     std::string frameSpeed = frameSpeedSection.substr(frameSpeedSection.find(":") + 1);
-
-    std::string internals = boneSection.substr(boneSection.find("[") + 1, boneSection.find("]") - boneSection.find("[") - 1);
-    std::cout << "Bones Internals: " << internals << std::endl;
-    std::cout << "Internals length: " << internals.length() << std::endl;
-
-    int currentIndex = 0;
-    while(currentIndex < internals.length())
-    {
-        std::string properties = internals.substr(currentIndex + 1, internals.find(")"));
-        std::cout << "Properties: " << properties << std::endl;
-
-
-        // std::string indexStr = properties.substr(properties.find("id:\"") + 4, properties.find("\",") - 4);
-        // std::cout << "Index:" << indexStr << std::endl;
-    
-        // size_t imageIndex = properties.find("image:\"") + 7;
-        // size_t widthIndex = properties.find("width:") + 6;
-
-        // std::cout <<  imageIndex << std::endl;
-        // std::cout <<  widthIndex << std::endl;
-
-        // std::string imageStr = properties.substr(imageIndex, widthIndex - imageIndex);
-        // std::cout << "Image:" << imageStr << std::endl;
-
-        currentIndex += properties.length() + 1;
-    }
-
     anim.frameSpeed = std::stoi(frameSpeed);
     
+    int currentIndex = 0;
+    while(currentIndex < boneSection.length() - 1)
+    {        
+        std::string properties = boneSection.substr(currentIndex + 1, boneSection.find(")", currentIndex + 1) - currentIndex - 1);
 
-    anim.frameSpeed = 0;
-    int boneIndex = 0;
-    // std::string boneStr = ;
+        std::stringstream ss(properties);
+        std::vector<std::string> segments;
 
+        while(ss.good())
+        {   
+            std::string buffer;
+            getline(ss, buffer, ',');
+
+            if(buffer.find("\"") != -1)
+            {
+                buffer = buffer.substr(buffer.find("\"") + 1, buffer.length() - buffer.find("\"") - 2);
+            }
+            else
+            {
+                buffer = buffer.substr(buffer.find(":") + 1, buffer.length() - buffer.find(":") - 1);
+            }
+
+            segments.push_back(buffer);
+        }
+
+        Bone bone;
+        bone.id = segments[0];
+        bone.image = segments[1];
+        bone.rect.w = std::stoi(segments[2]);
+        bone.rect.h = std::stoi(segments[3]);
+
+        anim.bones.push_back(bone);
+
+        currentIndex += properties.length() + 2;
+    }
+
+    currentIndex = 0;
+    while(currentIndex < frameSection.length() - 1)
+    {        
+        Frame frame;
+
+        for(std::vector<Bone>::iterator it = anim.bones.begin();
+            it != anim.bones.end(); ++it)
+        {
+            Bone newBoneState;
+            newBoneState.id = it->id;
+            newBoneState.image = it->image;
+            newBoneState.rect = it->rect;
+            frame.boneStates.push_back(newBoneState);
+        }
+
+        std::string properties;
+        
+        if(frameSection.find("))(", currentIndex + 1) != -1)
+        {
+            properties = frameSection.substr(currentIndex + 1, frameSection.find("))(", currentIndex + 1) - currentIndex);
+        } 
+        else
+        {
+            properties = frameSection.substr(currentIndex + 1, frameSection.find("))]", currentIndex + 1) - currentIndex);
+        }
+
+        std::stringstream ss(properties);
+
+        while(ss.good())
+        {
+            std::string buffer;
+            getline(ss, buffer, ')');
+            std::stringstream ss2(buffer);
+            std::vector<std::string> boneSegments;
+
+            if(buffer != "") 
+            {
+                while(ss2.good() && buffer != "")
+                {
+                    getline(ss2, buffer, ',');
+                    if(buffer.find("\"") != -1)
+                    {
+                        buffer = buffer.substr(buffer.find("\"") + 1, buffer.length() - buffer.find("\"") - 2);
+                    }
+                    else
+                    {
+                        buffer = buffer.substr(buffer.find(":") + 1, buffer.length() - buffer.find(":") - 1);
+                    }
+                    std::cout << "Buffer: " << buffer << std::endl;
+                    boneSegments.push_back(buffer);
+                }
+
+                for(int i = 0; i < frame.boneStates.size(); i++)
+                {
+                    std::cout << "Bone Segment 0: " << boneSegments[0] << std::endl;
+                    std::cout << "Bone Segment 1: " << std::stoi(boneSegments[1]) << std::endl;
+                    std::cout << "Bone Segment 2: " << std::stoi(boneSegments[2]) << std::endl;
+                    if(frame.boneStates[i].id == boneSegments[0])
+                    {
+                        frame.boneStates[i].rect.x = std::stoi(boneSegments[1]);
+                        frame.boneStates[i].rect.y = std::stoi(boneSegments[2]);
+                    }
+                }
+ 
+                anim.frames.push_back(frame);
+            }
+        }
+
+        currentIndex += properties.length() + 2;
+    }
 
     return anim;
 }
@@ -112,6 +180,19 @@ extern "C" void UpdateGameState(GameState* gameState, Input input)
         ));
 
         Animation anim = LoadAnimation("./assets/animations/player.sa");
+        
+        for(int i = 0; i < anim.bones.size(); i++)
+        {
+            std::cout << "Bone " << i + 1 << "-> Id:" << anim.bones[i].id << " Image: " << anim.bones[i].image << std::endl;
+        }
+        for(int i = 0; i < anim.frames.size(); i++)
+        {
+            std::cout << "Frame " << i + 1 << "-> Id:" << anim.bones[i].id << " Image: " << anim.bones[i].image << std::endl;
+            for(int j = 0; j < anim.frames[i].boneStates.size(); j++)
+            {
+                std::cout << "BoneState " << j + 1 << "-> Id:" << anim.frames[i].boneStates[j].id << " PosX: " << anim.frames[i].boneStates[j].rect.x << " PosY: " << anim.frames[i].boneStates[j].rect.y <<std::endl;
+            }
+        }
 
         gameState->initialized = true;
     }
